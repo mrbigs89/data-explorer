@@ -1,0 +1,69 @@
+buildscript {
+    repositories {
+        maven { url 'https://plugins.gradle.org/m2/' }
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
+    }
+}
+
+version '1.0-SNAPSHOT'
+
+apply plugin: "scala"
+apply plugin: 'application'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+compileScala {
+    configure(scalaCompileOptions.forkOptions) {
+        memoryMaximumSize = '1g'
+        //jvmArgs = ['-XX:MaxPermSize=1024m']
+    }
+    scalaCompileOptions.with {
+        //force = true
+    }
+}
+
+tasks.withType(ScalaCompile) {
+    scalaCompileOptions.additionalParameters = ["-deprecation",
+                                                "-feature",
+                                                "-language:implicitConversions",
+                                                "-language:postfixOps",
+                                                "-language:reflectiveCalls",
+                                                "-language:existentials"]
+}
+
+build.finalizedBy shadowJar
+jar.enabled = false
+shadowJar {
+    classifier = ''
+}
+
+configurations {
+    provided
+}
+
+sourceSets {
+    main {
+        compileClasspath += configurations.provided
+    }
+}
+dependencies {
+    // CASSANDRA
+    compile group: 'com.datastax.cassandra', name: 'cassandra-driver-core', version: '3.1.0'
+    compile group: 'com.datastax.spark', name: 'spark-cassandra-connector_2.11', version: '2.0.0-M3'
+
+    // SPARK
+    compile 'org.apache.spark:spark-core_2.11:2.0.0'
+    compile 'org.apache.spark:spark-sql_2.11:2.0.0'
+
+    // JDBC
+    compile group: 'org.scalikejdbc', name: 'scalikejdbc_2.11', version: '2.4.2'
+
+
+
+}
